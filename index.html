@@ -3006,5 +3006,83 @@ if(window.self!==window.top){
   const sh=document.querySelector('.side-head'); if(sh) sh.appendChild(n);
 }
 </script>
+  <!--
+  ============================================================
+  FLEET DOCS  ->  RENTAL AGREEMENT  PREFILL
+  Rental Agreement uygulamasinda </body> etiketinden HEMEN ONCE
+  bu blogu yapistir. Baska hicbir yeri degistirme.
+
+  Fleet Docs'tan gelen link ornegi:
+  ...?unit=9RAFA11&vin=WP0CA2A97PS238297&model=Porsche%20911&color=Arctic%20Gray&year=2023
+  ============================================================
+-->
+<script>
+(function () {
+  if (!location.search || location.search.length < 2) return;  // parametre yoksa dokunma
+  var P = new URLSearchParams(location.search);
+
+  // URL parametresi  ->  formdaki alanin gercek id'si
+  var MAP = {
+    unit:   'unit',        // plaka  -> Unit #
+    vin:    'vin',         // VIN
+    model:  'model',       // Brand & Model
+    color:  'color',       // Color
+    ra:     'raNo',        // (opsiyonel) RA numarasi
+    renter: 'renterTop'    // (opsiyonel) kiraci adi
+  };
+
+  // Arac sinifini modelden tahmin et (Vehicle Class select'i icin)
+  function guessClass(model) {
+    var m = (model || '').toLowerCase();
+    if (/911|m4|amg gt|corvette|cayman|supra/.test(m))                    return 'Sport';
+    if (/g-class|g class|urus|bentayga|cullinan/.test(m))                 return 'Exotic';
+    if (/range rover|gle|glc|gls|x5|x7|q7|atlas|cross sport|suv/.test(m)) return 'SUV';
+    if (/convertible|cabrio|spyder|roadster/.test(m))                     return 'Convertible';
+    if (/coupe/.test(m))                                                  return 'Coupe';
+    if (/truck|f-150|silverado|tacoma|ram/.test(m))                       return 'Truck';
+    if (/van|sprinter|transit|sienna|odyssey/.test(m))                    return 'Van';
+    if (/corolla|camry|accord|civic|sedan|ionic|ioniq/.test(m))           return 'Sedan';
+    return null;
+  }
+
+  // Canli onizlemeyi tetikleyen deger atama
+  function setVal(el, val) {
+    if (!el || val == null || val === '') return;
+    var proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype
+              : el.tagName === 'SELECT'   ? HTMLSelectElement.prototype
+              :                             HTMLInputElement.prototype;
+    var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+    setter.call(el, val);
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function run() {
+    // 1) Dogrudan eslesen alanlar
+    Object.keys(MAP).forEach(function (key) {
+      var val = P.get(key);
+      if (val) setVal(document.getElementById(MAP[key]), val);
+    });
+
+    // 2) Arac sinifini otomatik sec
+    var cls = guessClass(P.get('model'));
+    if (cls) {
+      var sel = document.getElementById('vclass');
+      if (sel && [].some.call(sel.options, function (o) { return o.value === cls; })) {
+        setVal(sel, cls);
+      }
+    }
+
+    // 3) Belgeyi yeniden ciz (canli onizleme + QR)
+    if (typeof window.render === 'function') { try { window.render(); } catch (e) {} }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(run, 120); });
+  } else {
+    setTimeout(run, 120);
+  }
+})();
+</script>
 </body>
 </html>
